@@ -1,0 +1,43 @@
+{
+  "name": "pregnancy-diet-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google/genai": "^1.9.0",
+    "@google/generative-ai": "^0.24.1",
+    "autoprefixer": "^10.4.16",
+    "axios": "^1.10.0",
+    "bcryptjs": "^2.4.3",
+    "cookie": "^0.6.0",
+    "date-fns": "^2.30.0",
+    "dotenv": "^17.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.2.0",
+    "mongoose": "^7.6.3",
+    "next": "^14.0.0",
+    "postcss": "^8.4.31",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.11.0",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.2.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie": "^0.6.0",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.8.7",
+    "@types/react": "^18.2.31",
+    "@types/react-dom": "^18.2.14",
+    "eslint": "^8.52.0",
+    "eslint-config-next": "^14.0.0",
+    "typescript": "^5.2.2"
+  }
+}

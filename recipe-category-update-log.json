@@ -1,0 +1,13 @@
+{
+  "totalRecipes": 44,
+  "updatedRecipes": 29,
+  "byMealType": 10,
+  "byName": 34,
+  "unchanged": 15,
+  "categories": {
+    "breakfast": 15,
+    "lunch": 16,
+    "dinner": 2,
+    "snack": 11
+  }
+}

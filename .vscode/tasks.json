@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "安装依赖",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "启动孕期饮食助手",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
