@@ -58,10 +58,7 @@ export default function Login() {
       const userData = await response.json();
       console.log('登录成功，用户数据:', userData);
       
-      // 显示成功消息
-      alert('登录成功，即将进入仪表盘');
-      
-      // 使用直接的页面导航代替路由
+      // 直接跳转到仪表盘，无需弹窗
       window.location.href = '/dashboard';
       
     } catch (error) {
