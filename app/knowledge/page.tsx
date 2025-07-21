@@ -5,7 +5,13 @@ import Header from '@/components/common/Header';
 import Footer from '@/components/common/Footer';
 
 // 食物安全等级标签组件
-const SafetyBadge = ({ level }) => {
+type SafetyLevel = 'safe' | 'moderate' | 'caution' | 'unsafe';
+
+interface SafetyBadgeProps {
+  level: SafetyLevel;
+}
+
+const SafetyBadge = ({ level }: SafetyBadgeProps) => {
   const badges = {
     safe: {
       text: '放心吃',

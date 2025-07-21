@@ -7,9 +7,13 @@ import { cookies } from 'next/headers';
 export async function GET() {
   try {
     // 获取用户cookie
-    const userId = cookies().get('userId')?.value;
+    const cookieStore = cookies();
+    const userId = cookieStore.get('userId')?.value;
+    
+    console.log('检查用户状态, userId cookie:', userId);
     
     if (!userId) {
+      console.log('未找到userId cookie, 用户未登录');
       return NextResponse.json({
         isLoggedIn: false,
         hasCompletedProfile: false,
