@@ -3,7 +3,7 @@ import { inter, zcoolXiaoWei } from './fonts';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '孕期饮食助手',
+  title: 'Erica的孕期饮食助手',
   description: '为准父母提供科学、安全、美味的孕期饮食建议，缓解饮食焦虑',
 };
 

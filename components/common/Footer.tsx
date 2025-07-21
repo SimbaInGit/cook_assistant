@@ -10,9 +10,9 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">孕期饮食助手</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">Erica的孕期饮食助手</h3>
             <p className="mb-4">
-              为准父母提供科学、安全、美味的孕期饮食建议，帮您轻松规划每日餐食
+              为Erica提供的科学、安全、美味的专属孕期饮食建议，帮你轻松规划每日餐食
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-white">
