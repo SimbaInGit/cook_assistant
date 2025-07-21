@@ -44,7 +44,7 @@ export default function Home() {
                   健康饮食，快乐孕期
                 </h1>
                 <p className="text-lg md:text-xl text-gray-600 mb-8">
-                  为准父母提供科学、安全、美味的孕期饮食建议，帮您轻松规划每日餐食
+                  为Erica提供的科学、安全、美味的专属孕期饮食建议，帮你轻松规划每日餐食
                 </p>
                 
                 {isLoggedIn ? (

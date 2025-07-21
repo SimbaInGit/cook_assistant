@@ -13,7 +13,7 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-heading font-bold text-primary-600">孕期饮食助手</span>
+            <span className="text-2xl font-heading font-bold text-primary-600">Erica的孕期饮食助手</span>
           </Link>
           
           {/* 桌面导航 */}
