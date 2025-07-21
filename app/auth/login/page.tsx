@@ -35,6 +35,8 @@ export default function Login() {
         throw new Error('请填写所有必填项');
       }
       
+      console.log('登录请求开始');
+      
       // 调用API进行用户验证
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -42,7 +44,10 @@ export default function Login() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
+        credentials: 'include', // 确保包含凭证
       });
+      
+      console.log('登录响应状态码:', response.status);
       
       if (!response.ok) {
         const data = await response.json();
@@ -51,11 +56,17 @@ export default function Login() {
       
       // 获取用户数据
       const userData = await response.json();
+      console.log('登录成功，用户数据:', userData);
       
-      // 成功后跳转到仪表板
-      router.push('/dashboard');
+      // 登录成功后延迟一秒，确保cookie设置完成
+      setTimeout(() => {
+        // 成功后跳转到仪表板
+        console.log('准备跳转到仪表板');
+        router.push('/dashboard');
+      }, 1000);
       
     } catch (error) {
+      console.error('登录错误:', error);
       setError(error instanceof Error ? error.message : '登录失败');
     } finally {
       setIsSubmitting(false);

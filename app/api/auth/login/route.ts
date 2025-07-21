@@ -44,9 +44,16 @@ export async function POST(request: NextRequest) {
       value: user._id.toString(),
       httpOnly: true,
       path: '/',
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // 改为lax以允许跨站点导航
+      secure: false, // 由于没使用HTTPS，必须设为false
       maxAge: 60 * 60 * 24 * 7, // 一周
+    });
+    
+    // 添加调试日志
+    console.log('用户登录成功，设置cookie:', {
+      userId: user._id.toString(),
+      name: user.name,
+      email: user.email
     });
 
     // 计算当前孕周
