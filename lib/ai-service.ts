@@ -35,12 +35,7 @@ abstract class BaseAIService implements AIService {
   }
   
   abstract generateDailyMealPlan(userHealth: IUserHealth): Promise<any>;
-  
-<<<<<<< HEAD
-  // 当API调用失败时，返回备用数据
-=======
 
->>>>>>> 14826afb935e2b828fe27c494ea1851452f31082
 }
 
 // 辅助函数：计算孕周和准备提示词

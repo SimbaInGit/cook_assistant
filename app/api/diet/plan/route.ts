@@ -126,8 +126,18 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('获取饮食计划时出错:', error);
     return NextResponse.json(
-      { error: '获取饮食计划失败', details: error instanceof Error ? error.message : '未知错误' },
-      { status: 500 }
+      { 
+        error: '获取饮食计划失败', 
+        details: error instanceof Error ? error.message : '未知错误',
+        timestamp: new Date().toISOString(),
+        success: false
+      },
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     );
   }
 }

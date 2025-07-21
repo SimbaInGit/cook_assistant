@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   console.log(`[Middleware] 路径: ${request.nextUrl.pathname}, userId cookie: ${userId ? '存在' : '不存在'}`);
   
   // 处理受保护的路由
-  const protectedRoutes = ['/dashboard', '/profile', '/profile/setup'];
+  const protectedRoutes = ['/dashboard', '/profile', '/profile/setup', '/knowledge'];
   
   if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     if (!userId) {
@@ -32,5 +32,5 @@ export function middleware(request: NextRequest) {
 
 // 配置仅对这些路径运行中间件
 export const config = {
-  matcher: ['/(dashboard|profile|auth/login)(:path*)?'],
+  matcher: ['/(dashboard|profile|auth/login|knowledge)(:path*)?'],
 };

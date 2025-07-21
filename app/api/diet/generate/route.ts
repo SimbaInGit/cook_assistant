@@ -342,7 +342,19 @@ export async function POST(request: NextRequest) {
         caloriesType: mealPlan.breakfast && mealPlan.breakfast.nutrition ? typeof mealPlan.breakfast.nutrition.calories : 'undefined',
         caloriesValue: mealPlan.breakfast && mealPlan.breakfast.nutrition ? mealPlan.breakfast.nutrition.calories : 'undefined'
       });
-
+      
+      // 验证AI返回的数据结构
+      if (!mealPlan) {
+        throw new Error('AI服务返回空响应');
+      }
+      
+      // 验证餐食数据是否存在
+      const meals = ['breakfast', 'lunch', 'dinner', 'morningSnack', 'afternoonSnack'];
+      const missingMeals = meals.filter(meal => !mealPlan[meal]);
+      
+      if (missingMeals.length > 0) {
+        console.warn(`警告: AI返回的饮食计划缺少以下餐食: ${missingMeals.join(', ')}`);
+      }
     // 准备保存饮食计划
     // 注意：在实际项目中，这里可能需要首先将菜谱保存到Recipe集合中
     // 但在当前演示版本中，我们简化处理，直接保存菜谱名称
@@ -490,13 +502,30 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       message: '饮食计划生成成功',
-      dietPlan: formattedDietPlan
+      dietPlan: formattedDietPlan,
+      success: true,
+      timestamp: new Date().toISOString()
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, must-revalidate'
+      }
     });
   } catch (error: any) {
     console.error('生成饮食计划失败:', error);
+    // 确保捕获所有错误，并始终返回JSON格式
     return NextResponse.json(
-      { error: `生成饮食计划失败: ${error.message || '未知错误'}` },
-      { status: 500 }
+      { 
+        error: `生成饮食计划失败: ${error.message || '未知错误'}`,
+        timestamp: new Date().toISOString(),
+        success: false
+      },
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     );
   } finally {
     const endTime = Date.now();

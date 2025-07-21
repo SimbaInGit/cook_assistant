@@ -326,7 +326,15 @@ export default function Dashboard(): React.ReactNode {
       
       console.log('获取饮食计划响应状态:', response.status);
       
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('解析饮食计划响应失败:', parseError);
+        const text = await response.text();
+        console.error('原始响应内容:', text.substring(0, 200) + '...');
+        throw new Error('无法解析服务器响应数据');
+      }
       console.log('获取饮食计划响应数据:', data);
       
       if (response.ok) {
@@ -513,7 +521,36 @@ export default function Dashboard(): React.ReactNode {
       console.log(`⏱️ API调用结束时间: ${new Date(endTime).toLocaleTimeString()}, 用时: ${endTime - startTime}ms`);
       
       // 获取响应数据
-      const data = await response.json();
+      let data;
+      try {
+        // 首先检查状态码
+        if (!response.ok) {
+          // 对于非2xx响应，先尝试解析为JSON
+          try {
+            data = await response.json();
+          } catch (e) {
+            // 如果不是JSON，获取文本内容
+            const text = await response.text();
+            console.error('API响应不是有效的JSON:', text.substring(0, 200) + '...');
+            throw new Error(`服务器返回状态码 ${response.status}`);
+          }
+          throw new Error(data.error || data.message || `服务器返回状态码 ${response.status}`);
+        }
+        
+        // 尝试解析成功响应
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          // 如果不是JSON，获取文本内容
+          const text = await response.text();
+          console.error('API响应不是有效的JSON:', text.substring(0, 200) + '...');
+          throw new Error('服务器返回了非JSON格式数据');
+        }
+      } catch (parseError) {
+        console.error('解析API响应失败:', parseError);
+        throw new Error('无法解析服务器响应: ' + (parseError instanceof Error ? parseError.message : '未知错误'));
+      }
       console.log('🔍 API响应状态:', response.status);
       console.log('📄 API响应数据摘要:', {
         success: response.ok,
@@ -539,13 +576,34 @@ export default function Dashboard(): React.ReactNode {
         throw new Error(data.message || data.error || '生成饮食计划失败');
       }
       
-      if (data.dietPlan) {
+      if (data && data.dietPlan) {
         if (isReplace) {
           console.log('成功更新饮食计划:', data.dietPlan);
         } else {
           console.log('成功生成新的饮食计划:', data.dietPlan);
         }
-        setDietPlan(data.dietPlan);
+        
+        // 确保所有必要的数据结构都存在
+        const validatedDietPlan = {
+          ...data.dietPlan,
+          breakfast: data.dietPlan.breakfast || { name: '暂无早餐数据', ingredients: [], nutrition: { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 } },
+          lunch: data.dietPlan.lunch || { name: '暂无午餐数据', ingredients: [], nutrition: { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 } },
+          dinner: data.dietPlan.dinner || { name: '暂无晚餐数据', ingredients: [], nutrition: { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 } },
+          morningSnack: data.dietPlan.morningSnack || { name: '暂无上午加餐数据', ingredients: [], nutrition: { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 } },
+          afternoonSnack: data.dietPlan.afternoonSnack || { name: '暂无下午加餐数据', ingredients: [], nutrition: { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 } },
+          nutritionSummary: data.dietPlan.nutritionSummary || { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 }
+        };
+        
+        // 更新状态
+        setDietPlan(validatedDietPlan);
+        
+        // 显示成功消息
+        setError(null);
+        
+        // 重新获取今天的饮食计划以刷新界面
+        setTimeout(() => {
+          fetchTodayDietPlan();
+        }, 500);
       } else {
         console.error('API返回数据缺少dietPlan字段:', data);
         throw new Error('服务器返回的数据格式不正确，缺少饮食计划信息');
