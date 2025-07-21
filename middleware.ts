@@ -8,15 +8,23 @@ export function middleware(request: NextRequest) {
   // 记录每次访问的路径和cookie状态
   console.log(`[Middleware] 路径: ${request.nextUrl.pathname}, userId cookie: ${userId ? '存在' : '不存在'}`);
   
-  // 仅对仪表板页面进行处理
-  if (request.nextUrl.pathname === '/dashboard') {
+  // 处理受保护的路由
+  const protectedRoutes = ['/dashboard', '/profile', '/profile/setup'];
+  
+  if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     if (!userId) {
       console.log('[Middleware] 未找到userId cookie, 重定向到登录页');
       // 未登录时重定向到登录页
       return NextResponse.redirect(new URL('/auth/login', request.url));
     } else {
-      console.log('[Middleware] 用户已登录，允许访问仪表板');
+      console.log('[Middleware] 用户已登录，允许访问受保护页面');
     }
+  }
+  
+  // 如果是登录页面但已经登录，重定向到仪表盘
+  if (request.nextUrl.pathname === '/auth/login' && userId) {
+    console.log('[Middleware] 用户已登录但访问登录页，重定向到仪表盘');
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
   return NextResponse.next();
@@ -24,5 +32,5 @@ export function middleware(request: NextRequest) {
 
 // 配置仅对这些路径运行中间件
 export const config = {
-  matcher: ['/dashboard', '/profile/:path*'],
+  matcher: ['/(dashboard|profile|auth/login)(:path*)?'],
 };

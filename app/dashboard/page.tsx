@@ -370,7 +370,7 @@ export default function Dashboard(): React.ReactNode {
         setError('您的登录会话已过期，即将重定向到登录页面');
         // 重定向到登录页面
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = '/auth/login';
         }, 2000);
       } else {
         // 其他错误

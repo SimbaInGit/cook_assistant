@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/common/Header';
@@ -58,12 +58,11 @@ export default function Login() {
       const userData = await response.json();
       console.log('登录成功，用户数据:', userData);
       
-      // 登录成功后延迟一秒，确保cookie设置完成
-      setTimeout(() => {
-        // 成功后跳转到仪表板
-        console.log('准备跳转到仪表板');
-        router.push('/dashboard');
-      }, 1000);
+      // 显示成功消息
+      alert('登录成功，即将进入仪表盘');
+      
+      // 使用直接的页面导航代替路由
+      window.location.href = '/dashboard';
       
     } catch (error) {
       console.error('登录错误:', error);
@@ -73,6 +72,31 @@ export default function Login() {
     }
   };
 
+  // 登录状态检查
+  useEffect(() => {
+    // 检查是否已登录
+    const checkLoginStatus = async () => {
+      try {
+        const response = await fetch('/api/user/status', {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.isLoggedIn) {
+            console.log('用户已登录，跳转到仪表板');
+            window.location.href = '/dashboard';
+          }
+        }
+      } catch (error) {
+        console.error('检查登录状态出错:', error);
+      }
+    };
+    
+    checkLoginStatus();
+  }, []);
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
