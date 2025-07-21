@@ -37,11 +37,6 @@ abstract class BaseAIService implements AIService {
   abstract generateDailyMealPlan(userHealth: IUserHealth): Promise<any>;
   
   // 当API调用失败时，返回备用数据
-  protected getBackupMealPlan(): any {
-    console.log('⚠️ API调用失败，使用备用数据');
-    console.log('📦 使用备用饮食计划数据');
-    return backupMealPlanData;
-  }
 }
 
 // 辅助函数：计算孕周和准备提示词

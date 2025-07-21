@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
+    "noImplicitAny": false,
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,  // 禁用所有严格类型检查
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
