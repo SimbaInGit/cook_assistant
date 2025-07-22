@@ -328,11 +328,18 @@ export default function Dashboard(): React.ReactNode {
       
       let data;
       try {
-        data = await response.json();
+        // 使用克隆的响应对象处理JSON解析
+        const responseClone = response.clone();
+        data = await responseClone.json();
       } catch (parseError) {
         console.error('解析饮食计划响应失败:', parseError);
-        const text = await response.text();
-        console.error('原始响应内容:', text.substring(0, 200) + '...');
+        // 尝试获取原始文本（这里不会导致错误，因为使用新的克隆响应）
+        try {
+          const text = await response.text();
+          console.error('原始响应内容:', text.substring(0, 200) + '...');
+        } catch (textError) {
+          console.error('无法读取响应文本:', textError);
+        }
         throw new Error('无法解析服务器响应数据');
       }
       console.log('获取饮食计划响应数据:', data);
@@ -523,11 +530,14 @@ export default function Dashboard(): React.ReactNode {
       // 获取响应数据
       let data;
       try {
+        // 先克隆响应对象，避免多次读取body
+        const responseClone = response.clone();
+        
         // 首先检查状态码
         if (!response.ok) {
           // 对于非2xx响应，先尝试解析为JSON
           try {
-            data = await response.json();
+            data = await responseClone.json();
           } catch (e) {
             // 如果不是JSON，获取文本内容
             const text = await response.text();
@@ -540,7 +550,7 @@ export default function Dashboard(): React.ReactNode {
         // 尝试解析成功响应
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
-          data = await response.json();
+          data = await responseClone.json();
         } else {
           // 如果不是JSON，获取文本内容
           const text = await response.text();
@@ -600,10 +610,8 @@ export default function Dashboard(): React.ReactNode {
         // 显示成功消息
         setError(null);
         
-        // 重新获取今天的饮食计划以刷新界面
-        setTimeout(() => {
-          fetchTodayDietPlan();
-        }, 500);
+        // 不再需要刷新页面或重新获取数据，因为我们已经有了最新数据
+        console.log('成功更新饮食计划，已直接更新UI');
       } else {
         console.error('API返回数据缺少dietPlan字段:', data);
         throw new Error('服务器返回的数据格式不正确，缺少饮食计划信息');
@@ -611,9 +619,26 @@ export default function Dashboard(): React.ReactNode {
       
     } catch (error) {
       console.error('生成饮食计划错误:', error);
-      setError(error instanceof Error ? error.message : '生成饮食计划失败，请稍后重试');
+      
+      // 处理响应流错误
+      if (error instanceof Error && error.message.includes('body stream already read')) {
+        console.warn('检测到响应流已读取错误，这可能是因为Response对象被多次读取');
+        setError('加载数据时遇到网络问题，正在重新获取...');
+        
+        // 当遇到此类错误时，尝试重新获取一次今日菜单
+        try {
+          await fetchTodayDietPlan();
+          setError(null); // 如果成功获取，清除错误
+        } catch (retryError) {
+          setError('无法获取最新菜单数据，请刷新页面重试');
+        }
+      } else {
+        // 其他常规错误
+        setError(error instanceof Error ? error.message : '生成饮食计划失败，请稍后重试');
+      }
     } finally {
       setIsGenerating(false);
+      console.log('食谱生成或刷新流程已完成');
     }
   };
   

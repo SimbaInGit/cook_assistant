@@ -121,7 +121,19 @@ export async function GET(request: NextRequest) {
       breakfast: formattedDietPlan.breakfast ? formattedDietPlan.breakfast.name : 'undefined'
     });
     
-    return NextResponse.json({ dietPlan: formattedDietPlan });
+    return NextResponse.json(
+      { 
+        dietPlan: formattedDietPlan,
+        success: true,
+        timestamp: new Date().toISOString()
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+        }
+      }
+    );
     
   } catch (error) {
     console.error('获取饮食计划时出错:', error);
