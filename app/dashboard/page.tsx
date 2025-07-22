@@ -28,6 +28,90 @@ interface User {
   }
 }
 
+// 状态消息组件
+interface StatusMessageProps {
+  message: string;
+  type: 'info' | 'success' | 'warning';
+  onClose?: () => void;
+}
+
+function StatusMessage({ message, type, onClose }: StatusMessageProps) {
+  const [isVisible, setIsVisible] = useState(true);
+  
+  // 根据类型选择不同的样式
+  const getStylesByType = () => {
+    switch(type) {
+      case 'success':
+        return {
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200',
+          textColor: 'text-green-700',
+          iconColor: 'text-green-400',
+          icon: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          )
+        };
+      case 'warning':
+        return {
+          bgColor: 'bg-yellow-50',
+          borderColor: 'border-yellow-200',
+          textColor: 'text-yellow-700',
+          iconColor: 'text-yellow-400',
+          icon: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          )
+        };
+      case 'info':
+      default:
+        return {
+          bgColor: 'bg-blue-50',
+          borderColor: 'border-blue-200',
+          textColor: 'text-blue-700',
+          iconColor: 'text-blue-400',
+          icon: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          )
+        };
+    }
+  };
+  
+  const styles = getStylesByType();
+  
+  if (!isVisible) return null;
+  
+  return (
+    <div className={`${styles.bgColor} border ${styles.borderColor} ${styles.textColor} px-4 py-3 rounded-lg mb-4 flex justify-between items-center shadow-sm transition-all duration-300 ease-in-out`}>
+      <div className="flex items-center">
+        <div className={`${styles.iconColor} mr-3 flex-shrink-0`}>
+          {styles.icon}
+        </div>
+        <div>
+          <p className="font-medium">{message}</p>
+        </div>
+      </div>
+      {onClose && (
+        <button 
+          onClick={() => {
+            setIsVisible(false);
+            if (onClose) onClose();
+          }}
+          className="ml-auto pl-3"
+        >
+          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
 interface Ingredient {
   name: string;
   amount: string;
@@ -197,6 +281,7 @@ export default function Dashboard(): React.ReactNode {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{message: string, type: 'info' | 'success' | 'warning'} | null>(null);
   
   // 获取用户状态和信息
   useEffect(() => {
@@ -502,6 +587,13 @@ export default function Dashboard(): React.ReactNode {
         throw new Error('用户ID无效，请重新登录');
       }
       
+      // 显示正在处理的友好状态提示
+      setStatusMessage({
+        message: '食谱生成中，请耐心等待。如遇到报错请手动刷新页面。',
+        type: 'info'
+      });
+      setError(null); // 清除可能存在的错误
+      
       // 构建请求体
       const requestBody = { 
         userId: safeUserId,
@@ -515,6 +607,10 @@ export default function Dashboard(): React.ReactNode {
       const startTime = Date.now();
       console.log(`⏱️ API调用开始时间: ${new Date(startTime).toLocaleTimeString()}`);
       
+      // 设置请求超时控制
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 240000); // 4分钟超时
+      
       const response = await fetch('/api/diet/generate', {
         method: 'POST',
         credentials: 'include', // 确保发送cookie
@@ -522,7 +618,11 @@ export default function Dashboard(): React.ReactNode {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
+        signal: abortController.signal,
       });
+      
+      // 请求完成后清除超时
+      clearTimeout(timeoutId);
       
       const endTime = Date.now();
       console.log(`⏱️ API调用结束时间: ${new Date(endTime).toLocaleTimeString()}, 用时: ${endTime - startTime}ms`);
@@ -612,6 +712,15 @@ export default function Dashboard(): React.ReactNode {
         
         // 不再需要刷新页面或重新获取数据，因为我们已经有了最新数据
         console.log('成功更新饮食计划，已直接更新UI');
+        
+        // 显示临时成功消息，使用友好的提示
+        setStatusMessage({
+          message: '食谱生成成功！感谢您的耐心等待！',
+          type: 'success'
+        });
+        
+        // 3秒后自动清除成功消息
+        setTimeout(() => setStatusMessage(null), 3000);
       } else {
         console.error('API返回数据缺少dietPlan字段:', data);
         throw new Error('服务器返回的数据格式不正确，缺少饮食计划信息');
@@ -620,21 +729,47 @@ export default function Dashboard(): React.ReactNode {
     } catch (error) {
       console.error('生成饮食计划错误:', error);
       
-      // 处理响应流错误
-      if (error instanceof Error && error.message.includes('body stream already read')) {
-        console.warn('检测到响应流已读取错误，这可能是因为Response对象被多次读取');
-        setError('加载数据时遇到网络问题，正在重新获取...');
+      // 处理各种特定错误类型
+      if (error instanceof Error) {
+        const errorMsg = error.message;
         
-        // 当遇到此类错误时，尝试重新获取一次今日菜单
-        try {
-          await fetchTodayDietPlan();
-          setError(null); // 如果成功获取，清除错误
-        } catch (retryError) {
-          setError('无法获取最新菜单数据，请刷新页面重试');
+        // 处理响应流错误
+        if (errorMsg.includes('body stream already read')) {
+          console.warn('检测到响应流已读取错误，这可能是因为Response对象被多次读取');
+          setStatusMessage({
+            message: '加载数据时遇到网络问题，请手动刷新页面重试',
+            type: 'warning'
+          });
+          setError(null);
+        }
+        // 处理超时或504错误
+        else if (errorMsg.includes('504') || errorMsg.includes('timeout') || errorMsg.includes('timed out')) {
+          console.warn('检测到请求超时或504错误');
+          setStatusMessage({
+            message: 'AI服务生成食谱超时，请刷新页面后重新尝试。如果问题持续，请稍后再试。',
+            type: 'warning'
+          });
+          setError(null);
+        } 
+        else if (errorMsg.includes('aborted')) {
+          // 请求被中止
+          setStatusMessage({
+            message: '请求被中断，可能是由于网络问题或浏览器刷新。请重新点击"获取今日食谱"按钮。',
+            type: 'warning'
+          });
+          setError(null);
+        }
+        else {
+          // 其他常规错误 - 这些可能是真正的系统错误，可以保留在错误状态
+          setError(`${errorMsg}。请刷新页面后重试。`);
         }
       } else {
-        // 其他常规错误
-        setError(error instanceof Error ? error.message : '生成饮食计划失败，请稍后重试');
+        // 未知错误 - 使用警告状态消息
+        setStatusMessage({
+          message: '生成饮食计划失败，请刷新页面后重试。',
+          type: 'warning'
+        });
+        setError(null);
       }
     } finally {
       setIsGenerating(false);
@@ -749,7 +884,7 @@ export default function Dashboard(): React.ReactNode {
                       👋 {user.name}，今天是 {formatDate(new Date())}
                     </h2>
                     <p className="text-gray-600">
-                      您现在怀孕 <span className="font-semibold text-primary-600">{user.healthInfo?.currentWeek || 0}</span> 周，
+                      您现在怀孕第 <span className="font-semibold text-primary-600">{user.healthInfo?.currentWeek || 0}</span> 周，
                       预产期是 <span className="font-semibold text-primary-600">
                         {user.healthInfo?.dueDate ? formatDate(user.healthInfo.dueDate) : '未设置'}
                       </span>
@@ -774,7 +909,7 @@ export default function Dashboard(): React.ReactNode {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          生成中...
+                          正在生成食谱...
                         </>
                       ) : dietPlan ? (
                         <>
@@ -837,6 +972,16 @@ export default function Dashboard(): React.ReactNode {
           {/* 主要内容区域 */}
           {activeTab === 'today' && (
             <div>
+              {/* 友好的状态消息提示 */}
+              {statusMessage && (
+                <StatusMessage 
+                  message={statusMessage.message}
+                  type={statusMessage.type}
+                  onClose={() => setStatusMessage(null)}
+                />
+              )}
+              
+              {/* 保留错误提示，但只显示真正的错误 */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
                   <p>{error}</p>
@@ -932,7 +1077,7 @@ export default function Dashboard(): React.ReactNode {
                     onClick={generateNewPlan}
                     disabled={isGenerating}
                   >
-                    {isGenerating ? '生成中...' : '获取今日食谱'}
+                    {isGenerating ? '正在生成食谱...' : '获取今日食谱'}
                   </button>
                 </div>
               )}

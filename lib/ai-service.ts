@@ -89,7 +89,7 @@ function prepareUserHealthInfo(userHealth: IUserHealth) {
     ${healthConditions.length > 0 ? `她的健康状况: ${healthConditions.join(', ')}。` : ''}
     
     请根据《中国居民膳食指南》孕期妇女部分，确保推荐的食谱组合满足对应孕周的能量、蛋白质、叶酸、铁、钙等关键营养素需求。
-    不要推荐任何孕期禁忌或慎食食物。
+    不要推荐任何孕期禁忌或慎食食物，烹饪步骤尽量详细，适合老人参照烹饪
     
     返回JSON格式，包含以下字段:
     {

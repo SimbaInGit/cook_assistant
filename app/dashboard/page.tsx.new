@@ -326,7 +326,7 @@ export default function Dashboard(): React.ReactNode {
                       👋 {user.name}，今天是 {formatDate(new Date())}
                     </h2>
                     <p className="text-gray-600">
-                      您现在怀孕 <span className="font-semibold text-primary-600">{user.healthInfo.currentWeek}</span> 周，
+                      您现在怀孕第 <span className="font-semibold text-primary-600">{user.healthInfo.currentWeek}</span> 周，
                       预产期是 <span className="font-semibold text-primary-600">{formatDate(user.healthInfo.dueDate)}</span>
                     </p>
                   </div>

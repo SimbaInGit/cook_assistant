@@ -279,6 +279,10 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   console.log(`🚀 开始处理饮食计划生成请求 - ${new Date().toLocaleString()}`);
   
+  // 设置超时控制
+  const apiTimeout = parseInt(process.env.AI_REQUEST_TIMEOUT || '180000');
+  console.log(`⏱️ API超时设置为 ${apiTimeout/1000} 秒`);
+  
   try {
     // 解析请求体
     const body = await request.json().catch(() => ({}));
@@ -330,8 +334,12 @@ export async function POST(request: NextRequest) {
     // 获取AI服务实例
     const aiService = getAIService();
     
-    console.log(`🤖 准备调用AI服务生成饮食计划...`);      // 调用AI服务生成饮食计划
-      const mealPlan = await aiService.generateDailyMealPlan(user.healthInfo);
+    console.log(`🤖 准备调用AI服务生成饮食计划...`);
+    
+    // 直接调用AI服务，等待结果返回
+    console.log(`⏱️ 开始调用AI服务，请求超时设置为 ${apiTimeout/1000} 秒`);
+    const mealPlan = await aiService.generateDailyMealPlan(user.healthInfo);
+    console.log('✅ AI服务成功返回饮食计划数据');
       
       // 检查AI返回的原始数据结构
       console.log('AI返回的饮食计划结构：', {
