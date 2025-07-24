@@ -12,6 +12,7 @@ export interface IUserHealth {
     hypertension?: boolean;         // 高血压
     other?: string;                 // 其他健康状况
   };
+  pastMeals?: string[];     // 过去几天吃过的菜品，用于避免重复
 }
 
 // 用户接口

@@ -64,42 +64,62 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // 获取饮食计划中餐食的ObjectId，并获取相应的Recipe数据
-    const mealIds = {
-      breakfast: dietPlan.meals?.breakfast,
-      lunch: dietPlan.meals?.lunch,
-      dinner: dietPlan.meals?.dinner,
-      morningSnack: dietPlan.meals?.morningSnack,
-      afternoonSnack: dietPlan.meals?.afternoonSnack
+    // 获取饮食计划中餐食的信息，并获取相应的Recipe数据
+    const mealRefs = {
+      breakfast: dietPlan.meals?.breakfast?.recipe,
+      lunch: dietPlan.meals?.lunch?.recipe,
+      dinner: dietPlan.meals?.dinner?.recipe,
+      morningSnack: dietPlan.meals?.morningSnack?.recipe,
+      afternoonSnack: dietPlan.meals?.afternoonSnack?.recipe
+    };
+    
+    // 保存餐食名称，用于在找不到菜谱时提供回退
+    const mealNames = {
+      breakfast: dietPlan.meals?.breakfast?.name,
+      lunch: dietPlan.meals?.lunch?.name,
+      dinner: dietPlan.meals?.dinner?.name,
+      morningSnack: dietPlan.meals?.morningSnack?.name,
+      afternoonSnack: dietPlan.meals?.afternoonSnack?.name
     };
     
     // 异步获取餐食数据
-    const getMealData = async (mealId: any) => {
-      if (!mealId) return null;
+    const getMealData = async (recipeId: any, mealName: string, mealType: string) => {
+      if (!recipeId) return null;
       try {
         // 如果是ObjectId，则查询Recipe模型
-        if (mongoose.Types.ObjectId.isValid(mealId)) {
-          const recipe = await Recipe.findById(mealId);
-          return recipe?.toObject() || null;
+        if (mongoose.Types.ObjectId.isValid(recipeId)) {
+          const recipe = await Recipe.findById(recipeId);
+          if (recipe) {
+            return recipe.toObject();
+          }
         }
-        // 如果已经是对象，直接返回
-        if (typeof mealId === 'object') {
-          return mealId;
-        }
-        return null;
+        
+        // 如果找不到菜谱，则创建一个基本的餐食对象
+        console.log(`未找到${mealType}菜谱(ID: ${recipeId})，使用基本餐食对象`);
+        return {
+          name: mealName || `未命名${mealType}`,
+          ingredients: [],
+          nutrition: {
+            calories: 0,
+            protein: 0,
+            fat: 0,
+            carbs: 0,
+            fiber: 0
+          }
+        };
       } catch (error) {
-        console.error('获取餐食数据失败:', error);
+        console.error(`获取${mealType}餐食数据失败:`, error);
         return null;
       }
     };
     
     // 异步获取所有餐食数据
     const [breakfast, morningSnack, lunch, afternoonSnack, dinner] = await Promise.all([
-      getMealData(mealIds.breakfast),
-      getMealData(mealIds.morningSnack),
-      getMealData(mealIds.lunch),
-      getMealData(mealIds.afternoonSnack),
-      getMealData(mealIds.dinner)
+      getMealData(mealRefs.breakfast, mealNames.breakfast || '未命名早餐', '早餐'),
+      getMealData(mealRefs.morningSnack, mealNames.morningSnack || '未命名上午加餐', '上午加餐'),
+      getMealData(mealRefs.lunch, mealNames.lunch || '未命名午餐', '午餐'),
+      getMealData(mealRefs.afternoonSnack, mealNames.afternoonSnack || '未命名下午加餐', '下午加餐'),
+      getMealData(mealRefs.dinner, mealNames.dinner || '未命名晚餐', '晚餐')
     ]);
 
     // 格式化返回的数据结构，保持与生成API一致的格式

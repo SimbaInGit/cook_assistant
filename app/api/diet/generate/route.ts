@@ -331,14 +331,52 @@ export async function POST(request: NextRequest) {
     
     console.log(`✅ 用户健康信息有效 - 孕周: ${user.healthInfo.currentWeek}, 预产期: ${user.healthInfo.dueDate}`);
 
+    // 获取用户过去3天的饮食计划
+    console.log(`🔍 获取用户过去3天的饮食计划...`);
+    const pastDays = 3; // 获取过去3天的记录
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - pastDays);
+    
+    // 查询过去3天的饮食计划
+    const pastDietPlans = await DietPlan.find({
+      userId: userId,
+      date: { $gte: startDate, $lt: today }
+    }).sort({ date: -1 }).lean();
+    
+    // 提取过去3天的菜品名称
+    const pastMealNames: Set<string> = new Set();
+    pastDietPlans.forEach(plan => {
+      if (plan.meals) {
+        // 检查并添加各餐食名称
+        if (plan.meals.breakfast?.name) pastMealNames.add(plan.meals.breakfast.name);
+        if (plan.meals.lunch?.name) pastMealNames.add(plan.meals.lunch.name);
+        if (plan.meals.dinner?.name) pastMealNames.add(plan.meals.dinner.name);
+        if (plan.meals.morningSnack?.name) pastMealNames.add(plan.meals.morningSnack.name);
+        if (plan.meals.afternoonSnack?.name) pastMealNames.add(plan.meals.afternoonSnack.name);
+      }
+    });
+    
+    // 将Set转为数组
+    const pastMealNamesArray = Array.from(pastMealNames);
+    console.log(`✅ 找到过去${pastDays}天的${pastMealNamesArray.length}个菜品: ${pastMealNamesArray.join(', ')}`);
+
+    // 创建用户健康信息的副本，加入历史菜谱信息
+    const userHealthWithHistory = {
+      ...user.healthInfo,
+      pastMeals: pastMealNamesArray
+    };
+    
     // 获取AI服务实例
     const aiService = getAIService();
     
     console.log(`🤖 准备调用AI服务生成饮食计划...`);
     
-    // 直接调用AI服务，等待结果返回
+    // 调用AI服务，传入带有历史菜谱的健康信息
     console.log(`⏱️ 开始调用AI服务，请求超时设置为 ${apiTimeout/1000} 秒`);
-    const mealPlan = await aiService.generateDailyMealPlan(user.healthInfo);
+    const mealPlan = await aiService.generateDailyMealPlan(userHealthWithHistory);
     console.log('✅ AI服务成功返回饮食计划数据');
       
       // 检查AI返回的原始数据结构
@@ -452,11 +490,26 @@ export async function POST(request: NextRequest) {
       // 更新现有计划
       console.log('更新现有饮食计划, ID:', dietPlan._id);
       dietPlan.meals = {
-        breakfast: mealObjectIds.breakfast,
-        lunch: mealObjectIds.lunch,
-        dinner: mealObjectIds.dinner,
-        morningSnack: mealObjectIds.morningSnack,
-        afternoonSnack: mealObjectIds.afternoonSnack
+        breakfast: {
+          recipe: mealObjectIds.breakfast,
+          name: mealPlan.breakfast ? mealPlan.breakfast.name : '未命名早餐'
+        },
+        lunch: {
+          recipe: mealObjectIds.lunch,
+          name: mealPlan.lunch ? mealPlan.lunch.name : '未命名午餐'
+        },
+        dinner: {
+          recipe: mealObjectIds.dinner,
+          name: mealPlan.dinner ? mealPlan.dinner.name : '未命名晚餐'
+        },
+        morningSnack: mealObjectIds.morningSnack ? {
+          recipe: mealObjectIds.morningSnack,
+          name: mealPlan.morningSnack ? mealPlan.morningSnack.name : '未命名上午加餐'
+        } : undefined,
+        afternoonSnack: mealObjectIds.afternoonSnack ? {
+          recipe: mealObjectIds.afternoonSnack,
+          name: mealPlan.afternoonSnack ? mealPlan.afternoonSnack.name : '未命名下午加餐'
+        } : undefined
       };
       dietPlan.nutritionSummary = nutritionSummary;
       await dietPlan.save();
@@ -469,11 +522,26 @@ export async function POST(request: NextRequest) {
         userId,
         date: dietPlanDate,
         meals: {
-          breakfast: mealObjectIds.breakfast,
-          lunch: mealObjectIds.lunch,
-          dinner: mealObjectIds.dinner,
-          morningSnack: mealObjectIds.morningSnack,
-          afternoonSnack: mealObjectIds.afternoonSnack
+          breakfast: {
+            recipe: mealObjectIds.breakfast,
+            name: mealPlan.breakfast ? mealPlan.breakfast.name : '未命名早餐'
+          },
+          lunch: {
+            recipe: mealObjectIds.lunch,
+            name: mealPlan.lunch ? mealPlan.lunch.name : '未命名午餐'
+          },
+          dinner: {
+            recipe: mealObjectIds.dinner,
+            name: mealPlan.dinner ? mealPlan.dinner.name : '未命名晚餐'
+          },
+          morningSnack: mealObjectIds.morningSnack ? {
+            recipe: mealObjectIds.morningSnack,
+            name: mealPlan.morningSnack ? mealPlan.morningSnack.name : '未命名上午加餐'
+          } : undefined,
+          afternoonSnack: mealObjectIds.afternoonSnack ? {
+            recipe: mealObjectIds.afternoonSnack,
+            name: mealPlan.afternoonSnack ? mealPlan.afternoonSnack.name : '未命名下午加餐'
+          } : undefined
         },
         nutritionSummary
       };

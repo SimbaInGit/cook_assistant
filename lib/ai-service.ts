@@ -17,29 +17,26 @@ abstract class BaseAIService implements AIService {
   protected apiKey: string;
   protected endpoint: string;
   protected timeout: number;
-  protected useBackupData: boolean;
   
   constructor() {
     this.apiKey = process.env.AI_API_KEY || '';
     this.endpoint = process.env.AI_API_ENDPOINT || '';
     // 设置超时时间，默认20秒，可通过环境变量配置
     this.timeout = parseInt(process.env.AI_REQUEST_TIMEOUT || '20000');
-    // 控制是否在需要时使用备用数据
-    this.useBackupData = process.env.USE_BACKUP_DATA === 'true';
     
-    console.log(`AI服务初始化 - 提供商: ${this.constructor.name}, 超时时间: ${this.timeout}ms, 备用数据模式: ${this.useBackupData ? '开启' : '关闭'}`);
+    console.log(`AI服务初始化 - 提供商: ${this.constructor.name}, 超时时间: ${this.timeout}ms`);
     
     if (!this.apiKey || !this.endpoint) {
       throw new Error('AI服务配置缺失：请检查环境变量中的API密钥和端点');
     }
   }
   
-  abstract generateDailyMealPlan(userHealth: IUserHealth): Promise<any>;
+  abstract generateDailyMealPlan(userHealth: any): Promise<any>;
 
 }
 
 // 辅助函数：计算孕周和准备提示词
-function prepareUserHealthInfo(userHealth: IUserHealth) {
+function prepareUserHealthInfo(userHealth: any) { // 使用any类型来接受额外的pastMeals属性
   // 计算当前孕周（如果未提供）
   let currentWeek = userHealth.currentWeek;
   if (!currentWeek && userHealth.dueDate) {
@@ -80,6 +77,9 @@ function prepareUserHealthInfo(userHealth: IUserHealth) {
     healthConditions.push(userHealth.healthConditions.other);
   }
   
+  // 检查是否有过去3天的菜品记录
+  const hasPastMeals = userHealth.pastMeals && Array.isArray(userHealth.pastMeals) && userHealth.pastMeals.length > 0;
+  
   // 构建提示词
   const prompt = `
     请为一位${currentWeek ? `怀孕第${currentWeek}周` : ''}（${trimester}）的准妈妈制定今日三餐和两次加餐的营养食谱。
@@ -87,6 +87,7 @@ function prepareUserHealthInfo(userHealth: IUserHealth) {
     ${userHealth.allergies && userHealth.allergies.length > 0 ? `她对以下食物过敏: ${userHealth.allergies.join(', ')}。` : ''}
     ${userHealth.dislikedFoods && userHealth.dislikedFoods.length > 0 ? `她不喜欢吃: ${userHealth.dislikedFoods.join(', ')}。` : ''}
     ${healthConditions.length > 0 ? `她的健康状况: ${healthConditions.join(', ')}。` : ''}
+    ${hasPastMeals ? `过去三天她已经吃过以下菜品，请避免重复推荐: ${userHealth.pastMeals.join('、')}。` : ''}
     
     请根据《中国居民膳食指南》孕期妇女部分，确保推荐的食谱组合满足对应孕周的能量、蛋白质、叶酸、铁、钙等关键营养素需求。
     不要推荐任何孕期禁忌或慎食食物，烹饪步骤尽量详细，适合老人参照烹饪
@@ -181,17 +182,8 @@ export class OpenAIService extends BaseAIService {
           return mealPlan;
         } catch (e) {
           console.error('❌ 解析AI返回的JSON失败:', e);
-          // 如果启用了备用数据，则在解析失败时使用备用数据
-          if (this.useBackupData) {
-            return this.getBackupMealPlan();
-          }
           throw new Error('生成菜谱失败: 无法解析返回的数据');
         }
-      }
-      
-      // 如果没有提取到JSON但启用了备用数据，则使用备用数据
-      if (this.useBackupData) {
-        return this.getBackupMealPlan();
       }
       
       throw new Error('生成菜谱失败: 无法从AI返回中提取有效数据');
@@ -201,10 +193,6 @@ export class OpenAIService extends BaseAIService {
       // 检查是否为超时错误
       if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
         console.error('⏱️ API调用失败: timeout of', this.timeout, 'ms exceeded');
-        // 如果启用了备用数据，则在超时时使用备用数据
-        if (this.useBackupData) {
-          return this.getBackupMealPlan();
-        }
       }
       throw new Error(`生成菜谱失败: ${error.message}`);
     }

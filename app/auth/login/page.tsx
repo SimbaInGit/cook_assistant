@@ -8,6 +8,7 @@ import Footer from '@/components/common/Footer';
 
 export default function Login() {
   const router = useRouter();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -50,11 +51,11 @@ export default function Login() {
       console.log('登录响应状态码:', response.status);
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '登录失败');
+        const errorData = await response.json();
+        throw new Error(errorData.error || '登录失败');
       }
       
-      // 获取用户数据
+      // 获取用户数据 - 注意：response.json()只能调用一次，因为它会消耗流
       const userData = await response.json();
       console.log('登录成功，用户数据:', userData);
       
@@ -93,6 +94,8 @@ export default function Login() {
     
     checkLoginStatus();
   }, []);
+  
+  // 登出逻辑已简化，不再检查退出登录状态
   
   return (
     <div className="flex flex-col min-h-screen">

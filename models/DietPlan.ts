@@ -1,16 +1,22 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { IRecipe } from './Recipe';
 
+// 餐食接口
+interface IMeal {
+  recipe: mongoose.Types.ObjectId | IRecipe; // 菜谱引用
+  name: string;                             // 菜谱名称
+}
+
 // 饮食计划接口（一天的饮食计划）
 export interface IDietPlan extends Document {
   userId: mongoose.Types.ObjectId; // 用户ID
   date: Date;                     // 日期
   meals: {
-    breakfast: mongoose.Types.ObjectId | IRecipe; // 早餐
-    lunch: mongoose.Types.ObjectId | IRecipe;     // 午餐
-    dinner: mongoose.Types.ObjectId | IRecipe;    // 晚餐
-    morningSnack?: mongoose.Types.ObjectId | IRecipe; // 上午加餐
-    afternoonSnack?: mongoose.Types.ObjectId | IRecipe; // 下午加餐
+    breakfast: IMeal;             // 早餐
+    lunch: IMeal;                 // 午餐
+    dinner: IMeal;                // 晚餐
+    morningSnack?: IMeal;         // 上午加餐
+    afternoonSnack?: IMeal;       // 下午加餐
   };
   nutritionSummary?: {           // 营养总结
     calories: number;            // 总卡路里
@@ -38,27 +44,55 @@ const DietPlanSchema = new Schema<IDietPlan>(
     },
     meals: {
       breakfast: {
-        type: Schema.Types.ObjectId,
-        ref: 'Recipe',
-        required: [true, '早餐是必需的'],
+        recipe: {
+          type: Schema.Types.ObjectId,
+          ref: 'Recipe',
+          required: [true, '早餐菜谱是必需的'],
+        },
+        name: {
+          type: String,
+          required: [true, '早餐名称是必需的'],
+        }
       },
       lunch: {
-        type: Schema.Types.ObjectId,
-        ref: 'Recipe',
-        required: [true, '午餐是必需的'],
+        recipe: {
+          type: Schema.Types.ObjectId,
+          ref: 'Recipe',
+          required: [true, '午餐菜谱是必需的'],
+        },
+        name: {
+          type: String,
+          required: [true, '午餐名称是必需的'],
+        }
       },
       dinner: {
-        type: Schema.Types.ObjectId,
-        ref: 'Recipe',
-        required: [true, '晚餐是必需的'],
+        recipe: {
+          type: Schema.Types.ObjectId,
+          ref: 'Recipe',
+          required: [true, '晚餐菜谱是必需的'],
+        },
+        name: {
+          type: String,
+          required: [true, '晚餐名称是必需的'],
+        }
       },
       morningSnack: {
-        type: Schema.Types.ObjectId,
-        ref: 'Recipe',
+        recipe: {
+          type: Schema.Types.ObjectId,
+          ref: 'Recipe',
+        },
+        name: {
+          type: String,
+        }
       },
       afternoonSnack: {
-        type: Schema.Types.ObjectId,
-        ref: 'Recipe',
+        recipe: {
+          type: Schema.Types.ObjectId,
+          ref: 'Recipe',
+        },
+        name: {
+          type: String,
+        }
       },
     },
     nutritionSummary: {
