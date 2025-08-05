@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cook-assistant
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cook-assistant
+  template:
+    metadata:
+      labels:
+        app: cook-assistant
+    spec:
+      containers:
+      - name: cook-assistant
+        image: 979559056307.dkr.ecr.us-east-2.amazonaws.com/simba/cook-assistant:latest
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: cook-assistant-env
