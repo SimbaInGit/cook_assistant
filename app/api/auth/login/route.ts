@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { cookies } from 'next/headers';
+import { setSessionCookie } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,17 +37,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 设置用户会话（此处简化处理，使用cookie）
-    // 在实际项目中，建议使用更安全的方法，如JWT
-    cookies().set({
-      name: 'userId',
-      value: user._id.toString(),
-      httpOnly: true,
-      path: '/',
-      sameSite: 'lax', // 改为lax以允许跨站点导航
-      secure: false, // 由于没使用HTTPS，必须设为false
-      maxAge: 60 * 60 * 24 * 7, // 一周
-    });
+    // 设置用户会话cookie（统一配置来自lib/session.ts）
+    setSessionCookie(user._id.toString());
     
     // 添加调试日志
     console.log('用户登录成功，设置cookie:', {
