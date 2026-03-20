@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { clearSessionCookie } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
-    // 清除用户ID cookie
-    cookies().delete('userId');
+    // 清除用户会话cookie（统一配置来自lib/session.ts）
+    clearSessionCookie();
 
     // 返回成功响应
     return NextResponse.json(
